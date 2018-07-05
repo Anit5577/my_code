@@ -102,6 +102,8 @@ for n in range(nlines):
     ax.set_ylabel('Ejected fraction')
     ax.set_xlim(0., 10.1)
     ax.set_ylim(-0.01, 0.5)
+    
+    ax.set_title('Sim %s' %(dname[n]))
+    plt.savefig('Unbound_fraction_bymass%s.png' %dname[n])
 
-#    plt.savefig('Unbound_fraction_bymass%s.png' %fname[i])
-  
+plt.show()  
