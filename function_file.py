@@ -337,211 +337,211 @@ def concat_simulations(dflist, dname, nlines):
 #%% functions to calculate the velocity dispersion, virial velocity dispersion and
 #IQR of all 20 simulations with the same initial conditions
 
-def virial_radvelocity_dispersion(dflist, nlines):
-
-    import numpy as np
-    import astropy.units as u
-    from astropy import constants as const
-
-    nsnaps = 101
-    strucpar = 10.
-    kms = u.km / u.s
-
-    for n in range(nlines):
-        dflist[n].nstars = dflist[n].loc[0].index.size
-
-        dflist[n].virzveldisp = []
-        for ssnap in range(0, nsnaps):
-            dflist_sorted = []
-            summass = 0.
-            halfmass = 0.
-            cmass = 0.
-            hmrad = 0.
-            dflist_sorted = dflist[n].loc[ssnap].sort_values('radval')
-            halfmass = (dflist[n].loc[ssnap]['mass'].sum()/2.)
-            cmass = (dflist_sorted['mass'].cumsum())
-            dflist_sorted['hmdif'] = np.absolute(cmass.subtract(halfmass))
-            hmrad = dflist_sorted.loc[dflist_sorted['hmdif'].idxmin(), 'radval']*u.pc
-            summass = dflist[n].loc[ssnap]['mass'].sum()*u.M_sun
-            dflist[n].virzveldisp.append((np.sqrt((2.*summass.to(u.kg)*const.G)/\
-                  (strucpar*hmrad.to(u.m)))).to(kms))
-
-    return dflist.virzveldisp
-
-def virial_space_velocity_dispersion(dflist, nlines):
-
-    import numpy as np
-    import astropy.units as u
-    from astropy import constants as const
-    nsnaps = 101
-    strucpar = 10./3.
-    kms = u.km / u.s
-
-    for n in range(nlines):
-        dflist[n].nstars = dflist[n].loc[0].index.size
-
-        dflist[n].vir_spaceveldisp = []
-        for ssnap in range(0, nsnaps):
-            dflist_sorted = []
-            summass = 0.
-            halfmass = 0.
-            cmass = 0.
-            hmrad = 0.
-            dflist_sorted = dflist[n].loc[ssnap].sort_values('radval')
-            halfmass = (dflist[n].loc[ssnap]['mass'].sum()/2.)
-            cmass = (dflist_sorted['mass'].cumsum())
-            dflist_sorted['hmdif'] = np.absolute(cmass.subtract(halfmass))
-            hmrad = dflist_sorted.loc[dflist_sorted['hmdif'].idxmin(), 'radval']*u.pc
-            summass = dflist[n].loc[ssnap]['mass'].sum()*u.M_sun
-            dflist[n].vir_spaceveldisp.append((np.sqrt((2.*summass.to(u.kg)*const.G)/\
-                  (strucpar*hmrad.to(u.m)))).to(kms))
-
-
-    return dflist.vir_spaceveldisp
-
-#%% velocity dispersion - radial, PM and 3D velocity
-
-
-def radvelocity_dispersion(datalist, nlines):
-    import numpy as np
-    import statistics
-    nsnaps = 101
-
-    zveldisp = np.zeros([nlines, nsnaps])
-    for n in range(nlines):
-
-        for ssnap in range(0, nsnaps):
-#this adds zero as the value of the dispersion for any snapshot without velocities
-            if len(datalist[n].loc[ssnap]) == 0:
-                zveldisp[n, ssnap] = np.nan
-
-            else:
-                zveldisp[n, ssnap] = statistics.pstdev(datalist[n].loc[ssnap, 'zvel'])
-
-    return zveldisp
-
-def pmvelocity_dispersion(datalist, nlines):
-    import numpy as np
-    import statistics
-    nsnaps = 101
-
-    pmveldisp = np.zeros([nlines, nsnaps])
-    for n in range(nlines):
-
-        for ssnap in range(0, nsnaps):
-
-            if len(datalist[n].loc[ssnap]) == 0:
-                pmveldisp[n, ssnap] = np.nan
-            else:
-                pmveldisp[n, ssnap] = statistics.pstdev(datalist[n].loc[ssnap, 'PM-veldist'])
-
-    return pmveldisp
-
-
-def spacevelocity_dispersion(datalist, nlines):
-    import numpy as np
-    import statistics
-    nsnaps = 101
-
-    spaceveldisp = np.zeros([nlines, nsnaps])
-    for n in range(nlines):
-
-        for ssnap in range(0, nsnaps):
-
-            if len(datalist[n].loc[ssnap]) == 0:
-                spaceveldisp[n, ssnap] = np.nan
-            else:
-                spaceveldisp[n, ssnap] = statistics.pstdev(datalist[n].loc[ssnap, '3D-veldist'])
-
-    return spaceveldisp
-
-
-#%% median and min/max for radial, PM and space velocity dispsersions of 20 simulations
-
-def dispersion_median_minmax(zveldisp):
-    import numpy as np
-    nsnaps = 101
-
-    mindisp = np.zeros([nsnaps])
-    maxdisp = np.zeros([nsnaps])
-    mediandisp = np.zeros([nsnaps])
-
-    for ssnap in range(nsnaps):
-        maxdisp[ssnap] = np.nanmax(zveldisp[:, ssnap])
-        mindisp[ssnap] = np.nanmin(zveldisp[:, ssnap])
-#list of medians from all 20 simulations for each snapshot.
-        mediandisp[ssnap] = np.nanmedian(zveldisp[:, ssnap])
-
-
-    return (mediandisp, mindisp, maxdisp)
-
-def pmdispersion_median_minmax(pmveldisp):
-    import numpy as np
-    nsnaps = 101
-
-    mindisp = np.zeros([nsnaps])
-    maxdisp = np.zeros([nsnaps])
-    mediandisp = np.zeros([nsnaps])
-
-    for ssnap in range(nsnaps):
-        maxdisp[ssnap] = np.nanmax(pmveldisp[:, ssnap])
-        mindisp[ssnap] = np.nanmin(pmveldisp[:, ssnap])
-#list of medians from all 20 simulations for each snapshot.
-        mediandisp[ssnap] = np.nanmedian(pmveldisp[:, ssnap])
-
-
-    return (mediandisp, mindisp, maxdisp)
-
-
-def spacedispersion_median_minmax(spaceveldisp):
-    import numpy as np
-    nsnaps = 101
-
-    mindisp = np.zeros([nsnaps])
-    maxdisp = np.zeros([nsnaps])
-    mediandisp = np.zeros([nsnaps])
-
-    for ssnap in range(nsnaps):
-        maxdisp[ssnap] = np.nanmax(spaceveldisp[:, ssnap])
-        mindisp[ssnap] = np.nanmin(spaceveldisp[:, ssnap])
-#list of medians from all 20 simulations for each snapshot
-        mediandisp[ssnap] = np.nanmedian(spaceveldisp[:, ssnap])
-
-    return mediandisp, mindisp, maxdisp
-#%% Interquartile range (radial and 3D)
-
-def IQR_radvelocity_dispersion(dflist, nlines):
-    import numpy as np
-    nsnaps = 101
-    for n in range(nlines):
-        dflist[n].nstars = dflist[n].loc[0].index.size
-        halfsnap = int(dflist[n].nstars/2.)
-
-        dflist[n].zvelIQR = []
-        for ssnap in range(0, nsnaps):
-            dflist[n].reset_index(level=1)
-            lowmedian = np.median(dflist[n].loc[ssnap].sort_values('zvel')[:halfsnap]['zvel'])
-            upmedian = np.median(dflist[n].loc[ssnap].sort_values('zvel')\
-                                 [halfsnap:int(dflist[n].nstars+1)]['zvel'])
-            dflist[n].zvelIQR.append(0.741*(upmedian-lowmedian))
-
-    return dflist.zvelIQR
-
-def space_IQR_velocity_dispersion(dflist, nlines):
-    import numpy as np
-    nsnaps = 101
-
-    for n in range(nlines):
-        dflist[n].nstars = dflist[n].loc[0].index.size
-        halfsnap = int(dflist[n].nstars/2.)
-
-        dflist[n].space_IQR = []
-        for ssnap in range(0, nsnaps):
-            dflist[n].reset_index(level=1)
-            lowmedian = np.median(dflist[n].loc[ssnap].sort_values('3D-veldist')\
-                                  [:halfsnap]['3D-veldist'])
-            upmedian = np.median(dflist[n].loc[ssnap].sort_values('3D-veldist')\
-                                 [halfsnap:int(dflist[n].nstars+1)]['3D-veldist'])
-            dflist[n].space_IQR.append(0.741*(upmedian-lowmedian))
-
-    return dflist.space_IQR
+#def virial_radvelocity_dispersion(dflist, nlines):
+#
+#    import numpy as np
+#    import astropy.units as u
+#    from astropy import constants as const
+#
+#    nsnaps = 101
+#    strucpar = 10.
+#    kms = u.km / u.s
+#
+#    for n in range(nlines):
+#        dflist[n].nstars = dflist[n].loc[0].index.size
+#
+#        dflist[n].virzveldisp = []
+#        for ssnap in range(0, nsnaps):
+#            dflist_sorted = []
+#            summass = 0.
+#            halfmass = 0.
+#            cmass = 0.
+#            hmrad = 0.
+#            dflist_sorted = dflist[n].loc[ssnap].sort_values('radval')
+#            halfmass = (dflist[n].loc[ssnap]['mass'].sum()/2.)
+#            cmass = (dflist_sorted['mass'].cumsum())
+#            dflist_sorted['hmdif'] = np.absolute(cmass.subtract(halfmass))
+#            hmrad = dflist_sorted.loc[dflist_sorted['hmdif'].idxmin(), 'radval']*u.pc
+#            summass = dflist[n].loc[ssnap]['mass'].sum()*u.M_sun
+#            dflist[n].virzveldisp.append((np.sqrt((2.*summass.to(u.kg)*const.G)/\
+#                  (strucpar*hmrad.to(u.m)))).to(kms))
+#
+#    return dflist.virzveldisp
+#
+#def virial_space_velocity_dispersion(dflist, nlines):
+#
+#    import numpy as np
+#    import astropy.units as u
+#    from astropy import constants as const
+#    nsnaps = 101
+#    strucpar = 10./3.
+#    kms = u.km / u.s
+#
+#    for n in range(nlines):
+#        dflist[n].nstars = dflist[n].loc[0].index.size
+#
+#        dflist[n].vir_spaceveldisp = []
+#        for ssnap in range(0, nsnaps):
+#            dflist_sorted = []
+#            summass = 0.
+#            halfmass = 0.
+#            cmass = 0.
+#            hmrad = 0.
+#            dflist_sorted = dflist[n].loc[ssnap].sort_values('radval')
+#            halfmass = (dflist[n].loc[ssnap]['mass'].sum()/2.)
+#            cmass = (dflist_sorted['mass'].cumsum())
+#            dflist_sorted['hmdif'] = np.absolute(cmass.subtract(halfmass))
+#            hmrad = dflist_sorted.loc[dflist_sorted['hmdif'].idxmin(), 'radval']*u.pc
+#            summass = dflist[n].loc[ssnap]['mass'].sum()*u.M_sun
+#            dflist[n].vir_spaceveldisp.append((np.sqrt((2.*summass.to(u.kg)*const.G)/\
+#                  (strucpar*hmrad.to(u.m)))).to(kms))
+#
+#
+#    return dflist.vir_spaceveldisp
+#
+##%% velocity dispersion - radial, PM and 3D velocity
+#
+#
+#def radvelocity_dispersion(datalist, nlines):
+#    import numpy as np
+#    import statistics
+#    nsnaps = 101
+#
+#    zveldisp = np.zeros([nlines, nsnaps])
+#    for n in range(nlines):
+#
+#        for ssnap in range(0, nsnaps):
+##this adds zero as the value of the dispersion for any snapshot without velocities
+#            if len(datalist[n].loc[ssnap]) == 0:
+#                zveldisp[n, ssnap] = np.nan
+#
+#            else:
+#                zveldisp[n, ssnap] = statistics.pstdev(datalist[n].loc[ssnap, 'zvel'])
+#
+#    return zveldisp
+#
+#def pmvelocity_dispersion(datalist, nlines):
+#    import numpy as np
+#    import statistics
+#    nsnaps = 101
+#
+#    pmveldisp = np.zeros([nlines, nsnaps])
+#    for n in range(nlines):
+#
+#        for ssnap in range(0, nsnaps):
+#
+#            if len(datalist[n].loc[ssnap]) == 0:
+#                pmveldisp[n, ssnap] = np.nan
+#            else:
+#                pmveldisp[n, ssnap] = statistics.pstdev(datalist[n].loc[ssnap, 'PM-veldist'])
+#
+#    return pmveldisp
+#
+#
+#def spacevelocity_dispersion(datalist, nlines):
+#    import numpy as np
+#    import statistics
+#    nsnaps = 101
+#
+#    spaceveldisp = np.zeros([nlines, nsnaps])
+#    for n in range(nlines):
+#
+#        for ssnap in range(0, nsnaps):
+#
+#            if len(datalist[n].loc[ssnap]) == 0:
+#                spaceveldisp[n, ssnap] = np.nan
+#            else:
+#                spaceveldisp[n, ssnap] = statistics.pstdev(datalist[n].loc[ssnap, '3D-veldist'])
+#
+#    return spaceveldisp
+#
+#
+##%% median and min/max for radial, PM and space velocity dispsersions of 20 simulations
+#
+#def dispersion_median_minmax(zveldisp):
+#    import numpy as np
+#    nsnaps = 101
+#
+#    mindisp = np.zeros([nsnaps])
+#    maxdisp = np.zeros([nsnaps])
+#    mediandisp = np.zeros([nsnaps])
+#
+#    for ssnap in range(nsnaps):
+#        maxdisp[ssnap] = np.nanmax(zveldisp[:, ssnap])
+#        mindisp[ssnap] = np.nanmin(zveldisp[:, ssnap])
+##list of medians from all 20 simulations for each snapshot.
+#        mediandisp[ssnap] = np.nanmedian(zveldisp[:, ssnap])
+#
+#
+#    return (mediandisp, mindisp, maxdisp)
+#
+#def pmdispersion_median_minmax(pmveldisp):
+#    import numpy as np
+#    nsnaps = 101
+#
+#    mindisp = np.zeros([nsnaps])
+#    maxdisp = np.zeros([nsnaps])
+#    mediandisp = np.zeros([nsnaps])
+#
+#    for ssnap in range(nsnaps):
+#        maxdisp[ssnap] = np.nanmax(pmveldisp[:, ssnap])
+#        mindisp[ssnap] = np.nanmin(pmveldisp[:, ssnap])
+##list of medians from all 20 simulations for each snapshot.
+#        mediandisp[ssnap] = np.nanmedian(pmveldisp[:, ssnap])
+#
+#
+#    return (mediandisp, mindisp, maxdisp)
+#
+#
+#def spacedispersion_median_minmax(spaceveldisp):
+#    import numpy as np
+#    nsnaps = 101
+#
+#    mindisp = np.zeros([nsnaps])
+#    maxdisp = np.zeros([nsnaps])
+#    mediandisp = np.zeros([nsnaps])
+#
+#    for ssnap in range(nsnaps):
+#        maxdisp[ssnap] = np.nanmax(spaceveldisp[:, ssnap])
+#        mindisp[ssnap] = np.nanmin(spaceveldisp[:, ssnap])
+##list of medians from all 20 simulations for each snapshot
+#        mediandisp[ssnap] = np.nanmedian(spaceveldisp[:, ssnap])
+#
+#    return mediandisp, mindisp, maxdisp
+##%% Interquartile range (radial and 3D)
+#
+#def IQR_radvelocity_dispersion(dflist, nlines):
+#    import numpy as np
+#    nsnaps = 101
+#    for n in range(nlines):
+#        dflist[n].nstars = dflist[n].loc[0].index.size
+#        halfsnap = int(dflist[n].nstars/2.)
+#
+#        dflist[n].zvelIQR = []
+#        for ssnap in range(0, nsnaps):
+#            dflist[n].reset_index(level=1)
+#            lowmedian = np.median(dflist[n].loc[ssnap].sort_values('zvel')[:halfsnap]['zvel'])
+#            upmedian = np.median(dflist[n].loc[ssnap].sort_values('zvel')\
+#                                 [halfsnap:int(dflist[n].nstars+1)]['zvel'])
+#            dflist[n].zvelIQR.append(0.741*(upmedian-lowmedian))
+#
+#    return dflist.zvelIQR
+#
+#def space_IQR_velocity_dispersion(dflist, nlines):
+#    import numpy as np
+#    nsnaps = 101
+#
+#    for n in range(nlines):
+#        dflist[n].nstars = dflist[n].loc[0].index.size
+#        halfsnap = int(dflist[n].nstars/2.)
+#
+#        dflist[n].space_IQR = []
+#        for ssnap in range(0, nsnaps):
+#            dflist[n].reset_index(level=1)
+#            lowmedian = np.median(dflist[n].loc[ssnap].sort_values('3D-veldist')\
+#                                  [:halfsnap]['3D-veldist'])
+#            upmedian = np.median(dflist[n].loc[ssnap].sort_values('3D-veldist')\
+#                                 [halfsnap:int(dflist[n].nstars+1)]['3D-veldist'])
+#            dflist[n].space_IQR.append(0.741*(upmedian-lowmedian))
+#
+#    return dflist.space_IQR
